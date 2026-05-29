@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lire & écrire Arabe — Cours 1 | Taalim Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tajawal:wght@300;400;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rouge: #c0392b;
+  --rouge-vif: #e74c3c;
+  --or: #f0c040;
+  --or-dark: #d4a020;
+  --noir: #0f0f0f;
+  --blanc: #ffffff;
+  --creme: #fdf9f3;
+  --gris: #888;
+  --gris-clair: #f0ece6;
+  --vert: #2ecc71;
+  --bleu: #3498db;
+  --violet: #9b59b6;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--creme);
+  color: var(--noir);
+  overflow-x: hidden;
+}
+
+/* ===== CONFETTI CANVAS ===== */
+#confetti-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  background: var(--noir);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  z-index: 9000;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.rouge { background: var(--rouge); }
+.toast.vert { background: var(--vert); }
+.toast.or { background: var(--or-dark); }
+
+/* ===== BADGE POPUP ===== */
+.badge-popup {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: white;
+  border-radius: 24px;
+  padding: 36px 40px;
+  text-align: center;
+  z-index: 8000;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.3);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 320px;
+  width: 90%;
+}
+.badge-popup.show { transform: translate(-50%, -50%) scale(1); }
+.badge-popup .badge-icon { font-size: 5rem; display: block; margin-bottom: 12px; animation: spin 0.6s ease; }
+.badge-popup h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 3px; color: var(--rouge); margin-bottom: 6px; }
+.badge-popup p { color: var(--gris); font-size: 0.9rem; margin-bottom: 20px; }
+.badge-popup button { background: var(--rouge); color: white; border: none; border-radius: 10px; padding: 12px 28px; font-family: 'Outfit', sans-serif; font-weight: 700; cursor: pointer; font-size: 0.95rem; }
+
+@keyframes spin { from { transform: rotate(-20deg) scale(0); } to { transform: rotate(0) scale(1); } }
+
+/* ===== OVERLAY ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 7000;
+  display: none;
+  backdrop-filter: blur(4px);
+}
+.overlay.show { display: block; }
+
+/* ===== HEADER ===== */
+.top-bar {
+  background: var(--noir);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+}
+
+.brand-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  color: var(--rouge);
+  letter-spacing: 3px;
+}
+
+.brand-sub { font-size: 0.65rem; color: rgba(255,255,255,0.4); letter-spacing: 3px; text-transform: uppercase; }
+
+.xp-bar-wrap { flex: 1; margin: 0 16px; }
+.xp-label { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; margin-bottom: 4px; }
+.xp-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.xp-fill { height: 100%; background: linear-gradient(90deg, var(--rouge), var(--or)); border-radius: 3px; width: 0%; transition: width 0.8s cubic-bezier(0.22,1,0.36,1); }
+
+.score-badge {
+  background: var(--rouge);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  transition: transform 0.3s;
+}
+.score-badge.bump { animation: bump 0.4s ease; }
+@keyframes bump { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+
+/* ===== HERO ===== */
+.hero {
+  background: var(--noir);
+  color: white;
+  padding: 50px 24px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rem;
+  color: rgba(192,57,43,0.06);
+  direction: rtl;
+  font-family: 'Tajawal', sans-serif;
+  letter-spacing: -20px;
+  pointer-events: none;
+  animation: floatBg 8s ease-in-out infinite alternate;
+}
+
+@keyframes floatBg { from { transform: translateY(0) scale(1); } to { transform: translateY(-20px) scale(1.05); } }
+
+.hero-tag {
+  display: inline-block;
+  border: 1px solid var(--rouge);
+  color: var(--rouge);
+  padding: 5px 16px;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  animation: fadeSlideDown 0.8s ease both;
+}
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.2rem;
+  letter-spacing: 5px;
+  line-height: 1;
+  margin-bottom: 8px;
+  animation: fadeSlideDown 0.8s 0.1s ease both;
+}
+
+.hero-arabic {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 2rem;
+  color: var(--rouge);
+  direction: rtl;
+  margin-bottom: 24px;
+  animation: fadeSlideDown 0.8s 0.2s ease both;
+}
+
+.hero-letters {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  direction: rtl;
+  flex-wrap: wrap;
+  animation: fadeSlideDown 0.8s 0.3s ease both;
+}
+
+.hero-letter {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.8rem;
+  color: var(--rouge);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.hero-letter:hover { background: var(--rouge); color: white; transform: translateY(-4px); border-color: var(--rouge); }
+
+@keyframes fadeSlideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== NAV ===== */
+.nav-wrap {
+  background: white;
+  border-bottom: 2px solid var(--gris-clair);
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 56px;
+  z-index: 400;
+}
+.nav-wrap::-webkit-scrollbar { display: none; }
+.nav-pills { display: flex; padding: 0 12px; }
+.pill {
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  color: var(--gris);
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.pill:hover { color: var(--noir); }
+.pill.active { color: var(--rouge); border-bottom-color: var(--rouge); }
+
+/* ===== SECTIONS ===== */
+.section { display: none; padding: 24px 18px 100px; max-width: 680px; margin: 0 auto; }
+.section.active { display: block; animation: slideIn 0.4s cubic-bezier(0.22,1,0.36,1); }
+@keyframes slideIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+
+.sec-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  letter-spacing: 3px;
+  margin-bottom: 4px;
+}
+.sec-ar {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.1rem;
+  color: var(--rouge);
+  direction: rtl;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--rouge);
+  display: inline-block;
+}
+
+/* ===== SLIDE — Alphabet progressif ===== */
+.slide-wrap {
+  background: var(--noir);
+  border-radius: 20px;
+  padding: 32px 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-glow {
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(192,57,43,0.15) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+
+.slide-letters {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 4rem;
+  color: rgba(255,255,255,0.3);
+  direction: rtl;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 90px;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.slide-letters .shown { color: white; }
+.slide-letters .new-one {
+  color: var(--rouge) !important;
+  animation: letterPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+
+@keyframes letterPop {
+  0% { transform: scale(0) rotate(-15deg); opacity:0; }
+  60% { transform: scale(1.3) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); opacity:1; }
+}
+
+.slide-info {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.slide-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: var(--rouge);
+  letter-spacing: 4px;
+  min-height: 50px;
+  transition: all 0.3s;
+}
+
+.slide-sound {
+  color: var(--or);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  min-height: 24px;
+}
+
+.slide-btns { display: flex; gap: 10px; justify-content: center; }
+.btn { padding: 12px 24px; border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+.btn-rouge { background: var(--rouge); color: white; }
+.btn-rouge:hover { background: var(--rouge-vif); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(192,57,43,0.4); }
+.btn-ghost { background: rgba(255,255,255,0.1); color: white; }
+.btn-ghost:hover { background: rgba(255,255,255,0.2); }
+.btn-or { background: var(--or); color: var(--noir); }
+.btn-or:hover { background: var(--or-dark); transform: translateY(-2px); }
+
+/* ===== LETTER CARDS ===== */
+.letter-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+  border: 2px solid transparent;
+}
+.letter-card:hover { border-color: var(--rouge); transform: translateX(4px); box-shadow: 0 6px 24px rgba(192,57,43,0.15); }
+.letter-card.open { border-color: var(--rouge); }
+
+.card-letter {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 3.5rem;
+  color: var(--rouge);
+  text-align: center;
+  line-height: 1;
+}
+
+.card-name { font-size: 1.05rem; font-weight: 700; }
+.card-sound { font-size: 0.82rem; color: var(--or-dark); font-weight: 600; margin-top: 3px; }
+.card-toggle { font-size: 1.2rem; color: var(--gris); transition: transform 0.3s; }
+.letter-card.open .card-toggle { transform: rotate(180deg); color: var(--rouge); }
+
+.card-forms {
+  display: none;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gris-clair);
+  direction: rtl;
+}
+.card-forms.open { display: grid; animation: expandDown 0.3s ease; }
+@keyframes expandDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+.form-cell {
+  background: var(--gris-clair);
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.form-cell .ar { font-family: 'Tajawal', sans-serif; font-size: 1.6rem; color: var(--rouge); display: block; }
+.form-cell .lb { font-size: 0.65rem; color: var(--gris); text-transform: uppercase; letter-spacing: 1px; direction: ltr; margin-top: 3px; }
+
+/* Sound btn */
+.sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gris-clair);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--noir);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+.sound-btn:hover { background: var(--rouge); color: white; }
+.sound-btn.playing { background: var(--rouge); color: white; animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { from { opacity:1; } to { opacity:0.7; } }
+
+/* ===== VOYELLES ===== */
+.voyelle-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  transition: transform 0.2s;
+}
+.voyelle-card:hover { transform: translateY(-3px); }
+
+.voyelle-top {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+}
+.voyelle-top.fatha { background: linear-gradient(135deg, var(--rouge), #922b21); }
+.voyelle-top.kasrah { background: linear-gradient(135deg, var(--bleu), #1a5276); }
+.voyelle-top.damma { background: linear-gradient(135deg, var(--vert), #1e8449); }
+
+.voyelle-meta h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; }
+.voyelle-meta .ar-name { font-family: 'Tajawal', sans-serif; font-size: 1rem; opacity: 0.8; direction: rtl; }
+.voyelle-son { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 2px; opacity: 0.9; }
+
+.voyelle-examples {
+  padding: 16px;
+  display: flex;
+  gap: 8px;
+  direction: rtl;
+  flex-wrap: wrap;
+  background: var(--gris-clair);
+}
+
+.voy-ex {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.voy-ex:hover { border-color: var(--rouge); transform: scale(1.1); }
+.voy-ex.fatha-color { color: var(--rouge); }
+.voy-ex.kasrah-color { color: var(--bleu); }
+.voy-ex.damma-color { color: var(--vert); }
+
+/* FORMS TABLE */
+.forms-table {
+  width: 100%;
+  border-collapse: collapse;
+  direction: rtl;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+  margin-top: 20px;
+}
+.forms-table th { background: var(--noir); color: white; padding: 12px; font-size: 0.75rem; letter-spacing: 2px; text-align: center; }
+.forms-table td { padding: 12px; text-align: center; font-family: 'Tajawal', sans-serif; font-size: 1.8rem; color: var(--rouge); border-bottom: 1px solid var(--gris-clair); }
+.forms-table tr:hover td { background: #fde8e8; }
+.forms-table .name-cell { font-family: 'Outfit', sans-serif; font-size: 0.8rem; color: var(--gris); direction: ltr; }
+
+/* ===== LECTURE FLASHCARDS ===== */
+.flash-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  direction: rtl;
+}
+
+.flash-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 10px 14px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+  position: relative;
+  overflow: hidden;
+}
+.flash-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(192,57,43,0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.flash-card:hover { border-color: var(--rouge); transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 24px rgba(192,57,43,0.2); }
+.flash-card:hover::before { opacity: 1; }
+.flash-card.flipped { background: #fff0ee; border-color: var(--rouge); }
+
+.flash-ar { font-family: 'Tajawal', sans-serif; font-size: 2.4rem; color: var(--rouge); display: block; margin-bottom: 6px; }
+.flash-letters { font-size: 0.72rem; color: var(--gris); direction: rtl; }
+.flash-reveal { font-size: 0.7rem; color: var(--rouge); font-weight: 700; opacity: 0; transition: opacity 0.3s; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+.flash-card.flipped .flash-reveal { opacity: 1; }
+
+/* ===== QUIZ ===== */
+.quiz-wrap {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+.quiz-header {
+  background: var(--noir);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quiz-progress-track { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 0 16px; overflow: hidden; }
+.quiz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--rouge), var(--or)); border-radius: 3px; transition: width 0.5s ease; }
+.quiz-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
+
+.quiz-body { padding: 28px 20px; }
+.quiz-letter { font-family: 'Tajawal', sans-serif; font-size: 8rem; color: var(--rouge); text-align: center; display: block; line-height: 1; margin-bottom: 10px; animation: letterEntrance 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes letterEntrance { from { transform: scale(0.3) rotate(10deg); opacity:0; } to { transform: scale(1) rotate(0); opacity:1; } }
+.quiz-question { text-align: center; color: var(--gris); font-size: 0.9rem; font-weight: 500; margin-bottom: 24px; }
+
+.quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qopt {
+  padding: 14px 10px;
+  background: var(--gris-clair);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.qopt:hover { border-color: var(--rouge); background: white; transform: scale(1.02); }
+.qopt.correct { background: #e8f8f0; border-color: var(--vert); color: var(--vert); animation: correctPop 0.4s ease; }
+.qopt.wrong { background: #fde8e8; border-color: var(--rouge); color: var(--rouge); animation: wrongShake 0.4s ease; }
+@keyframes correctPop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes wrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+.quiz-feedback {
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 16px;
+  font-weight: 700;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok { background: #e8f8f0; color: var(--vert); }
+.quiz-feedback.ko { background: #fde8e8; color: var(--rouge); }
+
+.quiz-next {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--noir);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+.quiz-next.show { display: block; }
+.quiz-next:hover { background: var(--rouge); }
+
+/* SCORE ROW */
+.score-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.sc-item {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+}
+.sc-item.bump { animation: bump 0.4s ease; }
+.sc-num { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; }
+.sc-num.c { color: var(--vert); }
+.sc-num.t { color: var(--gris); }
+.sc-num.p { color: var(--or-dark); }
+.sc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); margin-top: 2px; }
+
+/* LEADERBOARD */
+.leaderboard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  margin-top: 20px;
+}
+.lb-header {
+  background: var(--noir);
+  color: white;
+  padding: 14px 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lb-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--gris-clair);
+  transition: background 0.2s;
+  animation: slideInRow 0.4s ease both;
+}
+.lb-row:hover { background: var(--gris-clair); }
+@keyframes slideInRow { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+.lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; width: 40px; color: var(--gris); }
+.lb-rank.gold { color: #FFD700; }
+.lb-rank.silver { color: #C0C0C0; }
+.lb-rank.bronze { color: #CD7F32; }
+.lb-name { flex: 1; font-weight: 600; }
+.lb-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--rouge); letter-spacing: 1px; }
+.lb-bar-wrap { width: 80px; height: 6px; background: var(--gris-clair); border-radius: 3px; margin: 0 12px; overflow: hidden; }
+.lb-bar { height: 100%; background: linear-gradient(90deg, var(--rouge), var(--or)); border-radius: 3px; transition: width 1s ease; }
+
+/* DEVOIRS */
+.devoir-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.devoir-item:hover { border-color: var(--gris-clair); }
+.devoir-item.done { background: #f0fff8; border-color: var(--vert); }
+.devoir-item.done .dv-text { text-decoration: line-through; color: var(--gris); }
+
+.dv-check {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.devoir-item.done .dv-check { background: var(--vert); border-color: var(--vert); color: white; }
+.dv-star { font-size: 1.2rem; flex-shrink: 0; }
+.dv-text { flex: 1; font-size: 0.92rem; line-height: 1.4; }
+.dv-text strong { color: var(--rouge); }
+
+/* PROGRESS RING */
+.progress-ring-wrap { text-align: center; margin: 24px 0; }
+.progress-ring { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--gris-clair); stroke-width: 8; }
+.ring-fill { fill: none; stroke: url(#ringGrad); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 1s ease; }
+.ring-text { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; fill: var(--rouge); text-anchor: middle; dominant-baseline: middle; transform: rotate(90deg); transform-origin: center; }
+
+/* INFO BOX */
+.info-box { background: var(--gris-clair); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-size: 0.88rem; line-height: 1.7; }
+.info-box.rouge { background: #fde8e8; border-left: 4px solid var(--rouge); }
+.info-box.or { background: #fef9e7; border-left: 4px solid var(--or-dark); }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--noir);
+  display: flex; justify-content: space-around;
+  padding: 8px 0 14px;
+  z-index: 300;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+.bnav {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: rgba(255,255,255,0.35); cursor: pointer;
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 4px 10px; border: none; background: none;
+  font-family: 'Outfit', sans-serif; transition: color 0.2s;
+}
+.bnav.active { color: var(--rouge); }
+.bnav-icon { font-size: 1.2rem; margin-bottom: 1px; }
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 2.2rem; }
+  .flash-grid { grid-template-columns: repeat(2, 1fr); }
+  .quiz-opts { grid-template-columns: 1fr; }
+  .score-row { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay" onclick="closeBadge()"></div>
+<div class="badge-popup" id="badgePopup">
+  <span class="badge-icon" id="badgeIcon">🏆</span>
+  <h2 id="badgeTitle">Badge débloqué !</h2>
+  <p id="badgeDesc">Félicitations !</p>
+  <button onclick="closeBadge()">Super ! 🎉</button>
+</div>
+
+<!-- HEADER -->
+<div class="top-bar">
+  <div>
+    <div class="brand-logo">Taalim Studio</div>
+    <div class="brand-sub">Lire & écrire Arabe</div>
+  </div>
+  <div class="xp-bar-wrap">
+    <div class="xp-label"><span>XP</span><span id="xpVal">0 / 100</span></div>
+    <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+  </div>
+  <div class="score-badge" id="globalScore">0 pts</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg">بحث</div>
+  <div class="hero-tag">الحروف الهجائية — Cours 1</div>
+  <h1>Lire & écrire Arabe</h1>
+  <div class="hero-arabic">الحُرُوفُ الهِجَائِية — ا إلى خ</div>
+  <div class="hero-letters">
+    <div class="hero-letter" onclick="speakAr('ا')">ا</div>
+    <div class="hero-letter" onclick="speakAr('ب')">ب</div>
+    <div class="hero-letter" onclick="speakAr('ت')">ت</div>
+    <div class="hero-letter" onclick="speakAr('ث')">ث</div>
+    <div class="hero-letter" onclick="speakAr('ج')">ج</div>
+    <div class="hero-letter" onclick="speakAr('ح')">ح</div>
+    <div class="hero-letter" onclick="speakAr('خ')">خ</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <div class="nav-pills">
+    <div class="pill active" onclick="showSec('alphabet',this)">🔤 Alphabet</div>
+    <div class="pill" onclick="showSec('voyelles',this)">🎵 Voyelles</div>
+    <div class="pill" onclick="showSec('lecture',this)">📖 Lecture</div>
+    <div class="pill" onclick="showSec('quiz',this)">🎯 Quiz</div>
+    <div class="pill" onclick="showSec('classement',this)">🏆 Classement</div>
+    <div class="pill" onclick="showSec('devoirs',this)">⭐ Devoirs</div>
+  </div>
+</div>
+
+<!-- ALPHABET -->
+<section id="alphabet" class="section active">
+  <div class="sec-title">Les lettres isolées</div>
+  <div class="sec-ar">الحروف المنفصلة</div>
+
+  <div class="slide-wrap">
+    <div class="slide-glow"></div>
+    <div class="slide-info" id="slideInfo">Lettre 1 / 7 — Découverte progressive</div>
+    <div class="slide-letters" id="slideLetters"></div>
+    <div class="slide-name" id="slideName">ALIF</div>
+    <div class="slide-sound" id="slideSound">🔊 Son : A long / support</div>
+    <div class="slide-btns">
+      <button class="btn btn-ghost" onclick="prevLetter()">← Retour</button>
+      <button class="btn btn-or" onclick="speakCurrentLetter()">🔊 Écouter</button>
+      <button class="btn btn-rouge" onclick="nextLetter()">Suivant →</button>
+    </div>
+  </div>
+
+  <div style="font-size:0.8rem; color:var(--gris); text-transform:uppercase; letter-spacing:2px; margin-bottom:12px;">Appuyez pour voir les 4 formes + écouter</div>
+  <div id="letterCards"></div>
+</section>
+
+<!-- VOYELLES -->
+<section id="voyelles" class="section">
+  <div class="sec-title">Les voyelles courtes</div>
+  <div class="sec-ar">الحَرَكَاتُ</div>
+  <div class="info-box or">👆 Appuyez sur chaque lettre pour l'entendre prononcée avec sa voyelle.</div>
+
+  <div class="voyelle-card">
+    <div class="voyelle-top fatha">
+      <div class="voyelle-meta"><h2>AL FATHAH</h2><div class="ar-name">الفَتْحَةُ — Se place au-dessus</div></div>
+      <div class="voyelle-son">A</div>
+    </div>
+    <div class="voyelle-examples">
+      <div class="voy-ex fatha-color" onclick="speakAr('أَ'); addXP(2)">أَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('بَ'); addXP(2)">بَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('تَ'); addXP(2)">تَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('ثَ'); addXP(2)">ثَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('جَ'); addXP(2)">جَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('حَ'); addXP(2)">حَ</div>
+      <div class="voy-ex fatha-color" onclick="speakAr('خَ'); addXP(2)">خَ</div>
+    </div>
+  </div>
+
+  <div class="voyelle-card">
+    <div class="voyelle-top kasrah">
+      <div class="voyelle-meta"><h2>AL KASRAH</h2><div class="ar-name">الكَسْرَةُ — Se place en-dessous</div></div>
+      <div class="voyelle-son">I</div>
+    </div>
+    <div class="voyelle-examples">
+      <div class="voy-ex kasrah-color" onclick="speakAr('إِ'); addXP(2)">إِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('بِ'); addXP(2)">بِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('تِ'); addXP(2)">تِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('ثِ'); addXP(2)">ثِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('جِ'); addXP(2)">جِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('حِ'); addXP(2)">حِ</div>
+      <div class="voy-ex kasrah-color" onclick="speakAr('خِ'); addXP(2)">خِ</div>
+    </div>
+  </div>
+
+  <div class="voyelle-card">
+    <div class="voyelle-top damma">
+      <div class="voyelle-meta"><h2>AD DAMMAH</h2><div class="ar-name">الضَّمَّةُ — Se place au-dessus</div></div>
+      <div class="voyelle-son">OU</div>
+    </div>
+    <div class="voyelle-examples">
+      <div class="voy-ex damma-color" onclick="speakAr('أُ'); addXP(2)">أُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('بُ'); addXP(2)">بُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('تُ'); addXP(2)">تُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('ثُ'); addXP(2)">ثُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('جُ'); addXP(2)">جُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('حُ'); addXP(2)">حُ</div>
+      <div class="voy-ex damma-color" onclick="speakAr('خُ'); addXP(2)">خُ</div>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:28px; font-size:1.5rem;">Les 4 formes</div>
+  <table class="forms-table" id="formsTable">
+    <thead><tr>
+      <th class="name-cell" style="direction:ltr;">Lettre</th>
+      <th>Isolée</th><th>Début</th><th>Milieu</th><th>Fin</th>
+    </tr></thead>
+    <tbody id="formsTbody"></tbody>
+  </table>
+</section>
+
+<!-- LECTURE -->
+<section id="lecture" class="section">
+  <div class="sec-title">Lecture</div>
+  <div class="sec-ar">القِرَاءَةُ</div>
+  <div class="info-box rouge">👆 Cliquez sur chaque mot pour l'entendre et révéler sa décomposition. Chaque écoute = +5 XP !</div>
+  <div class="flash-grid" id="flashGrid"></div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="section">
+  <div class="sec-title">Quiz</div>
+  <div class="sec-ar">اختبار</div>
+
+  <div class="score-row">
+    <div class="sc-item"><div class="sc-num c" id="scC">0</div><div class="sc-label">✅ Correct</div></div>
+    <div class="sc-item"><div class="sc-num t" id="scT">0</div><div class="sc-label">📊 Total</div></div>
+    <div class="sc-item"><div class="sc-num p" id="scP">0%</div><div class="sc-label">🎯 Score</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-header">
+      <div class="quiz-num" id="qNum">1/12</div>
+      <div class="quiz-progress-track"><div class="quiz-progress-fill" id="qProg" style="width:0%"></div></div>
+      <div class="quiz-num" id="qPts">+0 pts</div>
+    </div>
+    <div class="quiz-body">
+      <span class="quiz-letter" id="qLetter">ب</span>
+      <div class="quiz-question" id="qQuestion">Quel est le nom de cette lettre ?</div>
+      <div class="quiz-opts" id="qOpts"></div>
+      <div class="quiz-feedback" id="qFeedback"></div>
+      <button class="quiz-next" id="qNext" onclick="nextQ()">Question suivante →</button>
+    </div>
+  </div>
+</section>
+
+<!-- CLASSEMENT -->
+<section id="classement" class="section">
+  <div class="sec-title">Classement</div>
+  <div class="sec-ar">لوحة الشرف</div>
+
+  <div class="score-row">
+    <div class="sc-item"><div class="sc-num c" id="clScore" style="color:var(--or-dark)">0</div><div class="sc-label">Votre score</div></div>
+    <div class="sc-item"><div class="sc-num t" id="clXP">0</div><div class="sc-label">XP total</div></div>
+    <div class="sc-item"><div class="sc-num p" id="clBadges" style="color:var(--violet)">0</div><div class="sc-label">Badges</div></div>
+  </div>
+
+  <div class="leaderboard">
+    <div class="lb-header">🏆 Tableau d'honneur — Session actuelle</div>
+    <div id="lbRows"></div>
+  </div>
+
+  <div style="margin-top:16px; text-align:center;">
+    <button class="btn btn-rouge" onclick="resetSession()" style="margin-top:8px;">🔄 Nouvelle session</button>
+  </div>
+</section>
+
+<!-- DEVOIRS -->
+<section id="devoirs" class="section">
+  <div class="sec-title">Pour la prochaine séance</div>
+  <div class="sec-ar">وَاجِبَاتٌ</div>
+  <div class="info-box">✅ Cochez chaque tâche. Compléter tous les devoirs débloque un badge spécial !</div>
+
+  <div id="devoirList"></div>
+
+  <div class="progress-ring-wrap">
+    <svg width="120" height="120" class="progress-ring" viewBox="0 0 100 100">
+      <defs>
+        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:var(--rouge)"/>
+          <stop offset="100%" style="stop-color:var(--or)"/>
+        </linearGradient>
+      </defs>
+      <circle class="ring-bg" cx="50" cy="50" r="45"/>
+      <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="45"/>
+      <text class="ring-text" x="50" y="50" id="ringText">0/8</text>
+    </svg>
+    <div style="font-size:0.8rem; color:var(--gris); text-transform:uppercase; letter-spacing:1px; margin-top:8px;">Devoirs complétés</div>
+  </div>
+</section>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav active" onclick="showSec('alphabet',null,this)"><span class="bnav-icon">🔤</span>Alphabet</button>
+  <button class="bnav" onclick="showSec('voyelles',null,this)"><span class="bnav-icon">🎵</span>Voyelles</button>
+  <button class="bnav" onclick="showSec('lecture',null,this)"><span class="bnav-icon">📖</span>Lecture</button>
+  <button class="bnav" onclick="showSec('quiz',null,this)"><span class="bnav-icon">🎯</span>Quiz</button>
+  <button class="bnav" onclick="showSec('classement',null,this)"><span class="bnav-icon">🏆</span>Classement</button>
+  <button class="bnav" onclick="showSec('devoirs',null,this)"><span class="bnav-icon">⭐</span>Devoirs</button>
+</div>
+
+<script>
+// ===== DATA =====
+const letters = [
+  { ar:'ا', name:'ALIF', sound:'A long / support', iso:'ا', deb:'ا', mil:'ـا', fin:'ـا' },
+  { ar:'ب', name:'BA', sound:'B', iso:'ب', deb:'بـ', mil:'ـبـ', fin:'ـب' },
+  { ar:'ت', name:'TA', sound:'T', iso:'ت', deb:'تـ', mil:'ـتـ', fin:'ـت' },
+  { ar:'ث', name:'THA', sound:'Th (anglais)', iso:'ث', deb:'ثـ', mil:'ـثـ', fin:'ـث' },
+  { ar:'ج', name:'DJIM', sound:'DJ', iso:'ج', deb:'جـ', mil:'ـجـ', fin:'ـج' },
+  { ar:'ح', name:'HA', sound:'H aspiré (du fond)', iso:'ح', deb:'حـ', mil:'ـحـ', fin:'ـح' },
+  { ar:'خ', name:'KHA', sound:'Kh (rauque, jota)', iso:'خ', deb:'خـ', mil:'ـخـ', fin:'ـخ' },
+];
+
+const lectureWords = [
+  { ar:'حَجَ', split:'حَ + جَ', hint:'Ha-Dja' },
+  { ar:'حَتَ', split:'حَ + تَ', hint:'Ha-Ta' },
+  { ar:'ثَبَ', split:'ثَ + بَ', hint:'Tha-Ba' },
+  { ar:'حَثَثُ', split:'حَ + ثَ + ثُ', hint:'Ha-Tha-Thou' },
+  { ar:'تَجِ', split:'تَ + جِ', hint:'Ta-Dji' },
+  { ar:'بَحَ', split:'بَ + حَ', hint:'Ba-Ha' },
+  { ar:'جَبُحَ', split:'جَ + بُ + حَ', hint:'Dja-Bou-Ha' },
+  { ar:'ثُبِتَ', split:'ثُ + بِ + تَ', hint:'Thou-Bi-Ta' },
+  { ar:'خُبُثِ', split:'خُ + بُ + ثِ', hint:'Khou-Bou-Thi' },
+  { ar:'حَجَأَ', split:'حَ + جَ + أَ', hint:'Ha-Dja-A' },
+  { ar:'تَأَخِ', split:'تَ + أَ + خِ', hint:'Ta-A-Khi' },
+  { ar:'أَبَحَ', split:'أَ + بَ + حَ', hint:'A-Ba-Ha' },
+];
+
+const quizQs = [
+  { l:'ب', q:'Nom de cette lettre ?', c:'Ba', o:['Ba','Ta','Tha','Noun'] },
+  { l:'ت', q:'Nom de cette lettre ?', c:'Ta', o:['Ba','Ta','Jim','Kaf'] },
+  { l:'ث', q:'Nom de cette lettre ?', c:'Tha', o:['Ba','Tha','Jim','Ra'] },
+  { l:'ج', q:'Nom de cette lettre ?', c:'Djim', o:['Ha','Kha','Djim','Dal'] },
+  { l:'ح', q:'Son produit par cette lettre ?', c:'H aspiré', o:['H aspiré','Kh','B','T'] },
+  { l:'خ', q:'Son produit par cette lettre ?', c:'Kh rauque', o:['H aspiré','Kh rauque','S','Z'] },
+  { l:'جَ', q:'Voyelle de cette lettre ?', c:'Fathah (A)', o:['Fathah (A)','Kasrah (I)','Dammah (OU)'] },
+  { l:'بِ', q:'Voyelle de cette lettre ?', c:'Kasrah (I)', o:['Fathah (A)','Kasrah (I)','Dammah (OU)'] },
+  { l:'تُ', q:'Voyelle de cette lettre ?', c:'Dammah (OU)', o:['Fathah (A)','Kasrah (I)','Dammah (OU)'] },
+  { l:'ا', q:'S\'attache-t-elle à gauche ?', c:'Non', o:['Oui','Non'] },
+  { l:'بَحَثَ', q:'Combien de lettres ?', c:'3', o:['2','3','4','5'] },
+  { l:'حَجَ', q:'Première lettre de ce mot ?', c:'ح', o:['ب','ث','ح','جَ'] },
+];
+
+const devoirs = [
+  { text:'Réviser toutes les lettres apprises', key:'rev' },
+  { text:'Les reconnaître dans le <strong>désordre</strong>', key:'des' },
+  { text:'Les réciter dans <strong>l\'ordre</strong>', key:'ord' },
+  { text:'Savoir <strong>attacher les lettres</strong>', key:'att' },
+  { text:'Refaire les <strong>exercices d\'écriture</strong>', key:'ecr' },
+  { text:'Refaire les <strong>exercices de lecture</strong>', key:'lec' },
+  { text:'Faire un <strong style="color:var(--rouge)">audio de la lecture</strong>', key:'aud' },
+  { text:'Faire la <strong style="color:var(--rouge)">dictée</strong>', key:'dic' },
+];
+
+const badges = [
+  { id:'first', icon:'🎉', title:'Premier pas !', desc:'Tu as commencé le cours !', pts:10 },
+  { id:'sound5', icon:'🔊', title:'Oreille musicale', desc:'5 lettres écoutées !', pts:20 },
+  { id:'quiz50', icon:'🎯', title:'Bonne visée !', desc:'50% de bonnes réponses !', pts:30 },
+  { id:'quiz100', icon:'🏆', title:'Parfait !', desc:'Quiz complété avec brio !', pts:50 },
+  { id:'devoirs', icon:'⭐', title:'Élève modèle !', desc:'Tous les devoirs cochés !', pts:40 },
+  { id:'lecteur', icon:'📖', title:'Grand lecteur !', desc:'10 mots lus et écoutés !', pts:25 },
+];
+
+// ===== STATE =====
+let slideIdx = 0;
+let xp = 0, totalScore = 0, soundCount = 0, readCount = 0, earnedBadges = new Set();
+let qIdx = 0, qScore = 0, qTotal = 0, qDone = false;
+let doneDevoirs = new Set();
+let sessionEntries = [{ name:'Vous', score: 0 }];
+
+// ===== CONFETTI =====
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+let confettis = [];
+function spawnConfetti(x, y, count = 60) {
+  const colors = ['#c0392b','#f0c040','#2ecc71','#3498db','#9b59b6','#e67e22'];
+  for (let i = 0; i < count; i++) {
+    confettis.push({
+      x: x || Math.random() * canvas.width,
+      y: y || -10,
+      vx: (Math.random()-0.5)*6,
+      vy: Math.random()*4+2,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      size: Math.random()*8+4,
+      rot: Math.random()*360,
+      rotV: (Math.random()-0.5)*8,
+      life: 1,
+    });
+  }
+}
+
+function animateConfetti() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  confettis = confettis.filter(c => c.life > 0);
+  confettis.forEach(c => {
+    c.x += c.vx; c.y += c.vy; c.rot += c.rotV; c.life -= 0.012;
+    ctx.save();
+    ctx.globalAlpha = c.life;
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot * Math.PI/180);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size/2);
+    ctx.restore();
+  });
+  requestAnimationFrame(animateConfetti);
+}
+animateConfetti();
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== BADGE =====
+function showBadge(badge) {
+  if (earnedBadges.has(badge.id)) return;
+  earnedBadges.add(badge.id);
+  document.getElementById('badgeIcon').textContent = badge.icon;
+  document.getElementById('badgeTitle').textContent = badge.title;
+  document.getElementById('badgeDesc').textContent = badge.desc + ` (+${badge.pts} pts)`;
+  document.getElementById('badgePopup').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+  addScore(badge.pts);
+  spawnConfetti(window.innerWidth/2, window.innerHeight/2, 80);
+  document.getElementById('clBadges').textContent = earnedBadges.size;
+}
+
+function closeBadge() {
+  document.getElementById('badgePopup').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ===== XP & SCORE =====
+function addXP(amount) {
+  xp += amount;
+  const pct = Math.min((xp % 100), 100);
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpVal').textContent = `${xp % 100} / 100`;
+  document.getElementById('clXP').textContent = xp;
+  if (xp > 0 && !earnedBadges.has('first')) showBadge(badges[0]);
+}
+
+function addScore(pts) {
+  totalScore += pts;
+  const el = document.getElementById('globalScore');
+  el.textContent = totalScore + ' pts';
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+  sessionEntries[0].score = totalScore;
+  document.getElementById('clScore').textContent = totalScore;
+  updateLeaderboard();
+}
+
+// ===== SOUND =====
+function speakAr(text) {
+  if (!window.speechSynthesis) { showToast('Synthèse vocale non disponible', 'rouge'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ar-SA';
+  u.rate = 0.8;
+  u.pitch = 1;
+  window.speechSynthesis.speak(u);
+  soundCount++;
+  addXP(3);
+  if (soundCount >= 5 && !earnedBadges.has('sound5')) showBadge(badges[1]);
+}
+
+// ===== SLIDE =====
+function updateSlide() {
+  const shown = letters.slice(0, slideIdx+1);
+  const div = document.getElementById('slideLetters');
+  div.innerHTML = shown.map((l,i) =>
+    `<span class="${i===slideIdx?'new-one':'shown'}">${l.ar}</span>`
+  ).join('');
+  document.getElementById('slideInfo').textContent = `Lettre ${slideIdx+1} / ${letters.length} — Découverte progressive`;
+  document.getElementById('slideName').textContent = letters[slideIdx].name;
+  document.getElementById('slideSound').textContent = `🔊 Son : ${letters[slideIdx].sound}`;
+}
+
+function nextLetter() {
+  if (slideIdx < letters.length-1) { slideIdx++; updateSlide(); addXP(5); showToast(`Nouvelle lettre : ${letters[slideIdx].name} ✨`,''); }
+  else showToast('Toutes les lettres découvertes ! 🎉','vert');
+}
+
+function prevLetter() { if (slideIdx>0) { slideIdx--; updateSlide(); } }
+function speakCurrentLetter() { speakAr(letters[slideIdx].ar); }
+
+// ===== LETTER CARDS =====
+function buildCards() {
+  const c = document.getElementById('letterCards');
+  letters.forEach((l,i) => {
+    const d = document.createElement('div');
+    d.className = 'letter-card';
+    d.style.animationDelay = (i*0.08)+'s';
+    d.innerHTML = `
+      <div class="card-letter">${l.ar}</div>
+      <div>
+        <div class="card-name">${l.name}</div>
+        <div class="card-sound">🔊 ${l.sound}</div>
+        <button class="sound-btn" onclick="event.stopPropagation(); speakAr('${l.ar}'); addXP(3)">▶ Écouter</button>
+      </div>
+      <div class="card-toggle">▼</div>
+      <div class="card-forms" id="cf-${i}">
+        <div class="form-cell"><span class="ar">${l.iso}</span><span class="lb">Isolée</span></div>
+        <div class="form-cell"><span class="ar">${l.deb}</span><span class="lb">Début</span></div>
+        <div class="form-cell"><span class="ar">${l.mil}</span><span class="lb">Milieu</span></div>
+        <div class="form-cell"><span class="ar">${l.fin}</span><span class="lb">Fin</span></div>
+      </div>`;
+    d.onclick = () => {
+      const f = document.getElementById(`cf-${i}`);
+      f.classList.toggle('open');
+      d.classList.toggle('open');
+      if (f.classList.contains('open')) addXP(5);
+    };
+    c.appendChild(d);
+  });
+}
+
+// ===== FORMS TABLE =====
+function buildFormsTable() {
+  const tb = document.getElementById('formsTbody');
+  letters.forEach((l,i) => {
+    tb.innerHTML += `<tr>
+      <td class="name-cell" style="direction:ltr; font-family:'Outfit'; font-size:0.78rem; color:var(--gris);">${l.name}</td>
+      <td>${l.iso}</td><td>${l.deb}</td><td>${l.mil}</td><td>${l.fin}</td>
+    </tr>`;
+  });
+}
+
+// ===== LECTURE =====
+function buildLecture() {
+  const g = document.getElementById('flashGrid');
+  lectureWords.forEach((w,i) => {
+    const d = document.createElement('div');
+    d.className = 'flash-card';
+    d.style.animationDelay = (i*0.06)+'s';
+    d.innerHTML = `
+      <span class="flash-ar">${w.ar}</span>
+      <div class="flash-letters">${w.split}</div>
+      <div class="flash-reveal">${w.hint}</div>`;
+    d.onclick = () => {
+      d.classList.toggle('flipped');
+      speakAr(w.ar);
+      readCount++;
+      addXP(5);
+      if (readCount >= 10 && !earnedBadges.has('lecteur')) showBadge(badges[5]);
+    };
+    g.appendChild(d);
+  });
+}
+
+// ===== QUIZ =====
+function loadQ() {
+  if (qIdx >= quizQs.length) { endQuiz(); return; }
+  qDone = false;
+  const q = quizQs[qIdx];
+  const pct = (qIdx/quizQs.length)*100;
+  document.getElementById('qLetter').textContent = q.l;
+  document.getElementById('qQuestion').textContent = q.q;
+  document.getElementById('qNum').textContent = `${qIdx+1}/${quizQs.length}`;
+  document.getElementById('qProg').style.width = pct+'%';
+  document.getElementById('qFeedback').className = 'quiz-feedback';
+  document.getElementById('qNext').className = 'quiz-next';
+  const opts = document.getElementById('qOpts');
+  opts.innerHTML = '';
+  [...q.o].sort(()=>Math.random()-0.5).forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'qopt';
+    b.textContent = opt;
+    b.onclick = () => checkQ(opt, q.c);
+    opts.appendChild(b);
+  });
+}
+
+function checkQ(chosen, correct) {
+  if (qDone) return;
+  qDone = true; qTotal++;
+  document.getElementById('scT').textContent = qTotal;
+  document.querySelectorAll('.qopt').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b.textContent === chosen && chosen !== correct) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('qFeedback');
+  if (chosen === correct) {
+    qScore++;
+    const pts = 10;
+    document.getElementById('scC').textContent = qScore;
+    const pct = Math.round(qScore/qTotal*100);
+    document.getElementById('scP').textContent = pct+'%';
+    document.getElementById('qPts').textContent = `+${pts} pts`;
+    fb.textContent = '✅ Excellent ! +10 pts'; fb.className = 'quiz-feedback show ok';
+    addScore(pts); addXP(10);
+    spawnConfetti(window.innerWidth/2, 300, 30);
+    if (pct >= 50 && !earnedBadges.has('quiz50')) setTimeout(()=>showBadge(badges[2]), 500);
+  } else {
+    fb.textContent = `❌ La bonne réponse était : ${correct}`; fb.className = 'quiz-feedback show ko';
+  }
+  document.getElementById('qNext').className = 'quiz-next show';
+}
+
+function nextQ() { qIdx++; loadQ(); }
+
+function endQuiz() {
+  const pct = Math.round(qScore/qTotal*100);
+  if (!earnedBadges.has('quiz100')) setTimeout(()=>showBadge(badges[3]), 600);
+  spawnConfetti(window.innerWidth/2, window.innerHeight/3, 120);
+  document.querySelector('.quiz-wrap').innerHTML = `
+    <div style="padding:40px 20px; text-align:center;">
+      <div style="font-size:5rem; margin-bottom:12px;">${pct>=80?'🌟':pct>=50?'👏':'📚'}</div>
+      <div style="font-family:'Bebas Neue',sans-serif; font-size:4rem; color:var(--rouge); letter-spacing:3px;">${qScore} / ${qTotal}</div>
+      <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--or-dark); margin:8px 0;">${pct}%</div>
+      <p style="color:var(--gris); margin:12px 0 24px; font-size:0.95rem;">${pct>=80?'Parfait ! Tu maîtrises le cours 🎉':pct>=50?'Bien ! Continue à réviser 💪':'Relis les leçons et réessaie 📖'}</p>
+      <button class="btn btn-rouge" onclick="restartQuiz()" style="width:100%;">🔄 Recommencer le quiz</button>
+    </div>`;
+}
+
+function restartQuiz() {
+  qIdx=0; qScore=0; qTotal=0;
+  document.getElementById('scC').textContent='0';
+  document.getElementById('scT').textContent='0';
+  document.getElementById('scP').textContent='0%';
+  document.querySelector('.quiz-wrap').innerHTML=`
+    <div class="quiz-header">
+      <div class="quiz-num" id="qNum">1/12</div>
+      <div class="quiz-progress-track"><div class="quiz-progress-fill" id="qProg" style="width:0%"></div></div>
+      <div class="quiz-num" id="qPts">+0 pts</div>
+    </div>
+    <div class="quiz-body">
+      <span class="quiz-letter" id="qLetter"></span>
+      <div class="quiz-question" id="qQuestion"></div>
+      <div class="quiz-opts" id="qOpts"></div>
+      <div class="quiz-feedback" id="qFeedback"></div>
+      <button class="quiz-next" id="qNext" onclick="nextQ()">Question suivante →</button>
+    </div>`;
+  loadQ();
+}
+
+// ===== LEADERBOARD =====
+const mockPlayers = [
+  { name:'Aicha B.', score:320 },
+  { name:'Youssef M.', score:280 },
+  { name:'Fatima K.', score:250 },
+  { name:'Omar L.', score:190 },
+];
+
+function updateLeaderboard() {
+  const all = [...mockPlayers, ...sessionEntries].sort((a,b)=>b.score-a.score);
+  const maxScore = all[0]?.score || 1;
+  const lb = document.getElementById('lbRows');
+  lb.innerHTML = '';
+  all.slice(0,6).forEach((p,i) => {
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const rankEmoji = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+    const isMe = p.name === 'Vous';
+    const bar = Math.round((p.score/maxScore)*100);
+    lb.innerHTML += `
+      <div class="lb-row" style="${isMe?'background:#fff0ee;':''}" style="animation-delay:${i*0.1}s">
+        <div class="lb-rank ${rankClass}">${rankEmoji}</div>
+        <div class="lb-name">${p.name}${isMe?' 👈':''}</div>
+        <div class="lb-bar-wrap"><div class="lb-bar" style="width:${bar}%"></div></div>
+        <div class="lb-score">${p.score}</div>
+      </div>`;
+  });
+}
+
+function resetSession() {
+  totalScore=0; xp=0; qScore=0; qTotal=0; qIdx=0;
+  earnedBadges.clear(); soundCount=0; readCount=0;
+  doneDevoirs.clear();
+  sessionEntries[0].score=0;
+  document.getElementById('globalScore').textContent='0 pts';
+  document.getElementById('xpFill').style.width='0%';
+  document.getElementById('clScore').textContent='0';
+  document.getElementById('clXP').textContent='0';
+  document.getElementById('clBadges').textContent='0';
+  updateLeaderboard();
+  showToast('Session réinitialisée !','');
+}
+
+// ===== DEVOIRS =====
+function buildDevoirs() {
+  const list = document.getElementById('devoirList');
+  devoirs.forEach((d,i) => {
+    const el = document.createElement('div');
+    el.className = 'devoir-item';
+    el.id = `dv-${i}`;
+    el.innerHTML = `
+      <div class="dv-star">⭐</div>
+      <div class="dv-text">${d.text}</div>
+      <div class="dv-check" id="dvc-${i}"></div>`;
+    el.onclick = () => toggleDevoir(i);
+    list.appendChild(el);
+  });
+}
+
+function toggleDevoir(i) {
+  const item = document.getElementById(`dv-${i}`);
+  const check = document.getElementById(`dvc-${i}`);
+  if (doneDevoirs.has(i)) {
+    doneDevoirs.delete(i);
+    item.classList.remove('done');
+    check.textContent = '';
+  } else {
+    doneDevoirs.add(i);
+    item.classList.add('done');
+    check.textContent = '✓';
+    addXP(8); addScore(5);
+    showToast('Devoir complété ! +5 pts 🌟', 'vert');
+  }
+  updateRing();
+  if (doneDevoirs.size === devoirs.length && !earnedBadges.has('devoirs')) {
+    setTimeout(()=>{ showBadge(badges[4]); spawnConfetti(window.innerWidth/2, window.innerHeight/2, 150); }, 300);
+  }
+}
+
+function updateRing() {
+  const total = devoirs.length;
+  const done = doneDevoirs.size;
+  const circumference = 283;
+  const offset = circumference - (done/total)*circumference;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  document.getElementById('ringText').textContent = `${done}/${total}`;
+}
+
+// ===== NAV =====
+const secs = ['alphabet','voyelles','lecture','quiz','classement','devoirs'];
+function showSec(id, tabEl, bnavEl) {
+  secs.forEach(s => document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (tabEl) { document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); tabEl.classList.add('active'); }
+  if (bnavEl) { document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active')); bnavEl.classList.add('active'); }
+  if (id==='quiz') loadQ();
+  if (id==='classement') updateLeaderboard();
+  window.scrollTo(0,0);
+}
+
+// ===== INIT =====
+updateSlide();
+buildCards();
+buildFormsTable();
+buildLecture();
+buildDevoirs();
+updateLeaderboard();
+updateRing();
+setTimeout(()=>{ addXP(1); showBadge(badges[0]); }, 1000);
+</script>
+</body>
+</html>
